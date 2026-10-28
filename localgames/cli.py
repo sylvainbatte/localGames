@@ -5,7 +5,7 @@ import time
 from typing import List, Optional
 
 from localgames.client.app import App
-from localgames.client.locator import ServerLocator
+from localgames.client.locator import SERVER_IDLE_TIMEOUT_SECONDS, ServerLocator
 from localgames.client.terminal import Terminal
 from localgames.config import SERVER_PORT
 from localgames.server.server import create_server
@@ -25,13 +25,13 @@ def _parse_arguments(argv: Optional[List[str]]) -> argparse.Namespace:
     parser.add_argument("--port", type=int, default=SERVER_PORT, help="port TCP du serveur")
     parser.add_argument("--server", action="store_true", help="lance uniquement un serveur dédié")
     parser.add_argument(
-        "--idle-timeout", type=float, default=None,
-        help="avec --server : s'arrête après ce nombre de secondes sans aucun joueur",
+        "--idle-timeout", type=float, default=SERVER_IDLE_TIMEOUT_SECONDS,
+        help="avec --server : s'arrête après ce nombre de secondes sans aucun joueur (0 : jamais)",
     )
     return parser.parse_args(argv)
 
 
-def _run_dedicated_server(port: int, idle_timeout: Optional[float]) -> int:
+def _run_dedicated_server(port: int, idle_timeout: float) -> int:
     server = create_server(port=port)
     try:
         server.start()
@@ -47,14 +47,14 @@ def _run_dedicated_server(port: int, idle_timeout: Optional[float]) -> int:
     return 0
 
 
-def _wait_until_idle(server, idle_timeout: Optional[float]) -> None:
+def _wait_until_idle(server, idle_timeout: float) -> None:
     """Blocks forever, or until no player has been connected for idle_timeout seconds."""
     idle_since = time.monotonic()
     while True:
         time.sleep(1)
         if server.player_count > 0:
             idle_since = time.monotonic()
-        elif idle_timeout is not None and time.monotonic() - idle_since >= idle_timeout:
+        elif idle_timeout and time.monotonic() - idle_since >= idle_timeout:
             return
 
 

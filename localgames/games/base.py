@@ -50,6 +50,26 @@ class GameView(ABC):
         """Maps a key press to a move to send to the server, or None."""
 
 
+EASY = "easy"
+MEDIUM = "medium"  # roughly an average human
+HARD = "hard"
+DIFFICULTIES = (EASY, MEDIUM, HARD)
+
+
+class Bot(ABC):
+    """Computer opponent. Plays as one player index, deciding from the public game state."""
+
+    def __init__(self, my_index: int, difficulty: str = MEDIUM) -> None:
+        if difficulty not in DIFFICULTIES:
+            raise ValueError(f"Difficulté inconnue : {difficulty}")
+        self.my_index = my_index
+        self.difficulty = difficulty
+
+    @abstractmethod
+    def choose_move(self, state: dict) -> Optional[dict]:
+        """Returns the move to play now (same shape as a client move), or None to wait."""
+
+
 @dataclass(frozen=True)
 class GameDefinition:
     """Everything the platform needs to list, host and display a game."""
@@ -59,3 +79,4 @@ class GameDefinition:
     player_count: int
     create_game: Callable[[], Game]
     create_view: Callable[[int, List[str]], GameView]
+    create_bot: Optional[Callable[[int, str], Bot]] = None  # None: no computer opponent

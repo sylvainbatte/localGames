@@ -4,7 +4,7 @@ import threading
 from typing import Dict, Iterable, List, Optional, Set
 
 from localgames.config import MAX_NAME_LENGTH
-from localgames.games.base import GameDefinition
+from localgames.games.base import DIFFICULTIES, MEDIUM, GameDefinition
 from localgames.protocol import ServerMessage, build_message
 from localgames.server.session import Session
 
@@ -24,6 +24,16 @@ class Player:
             self._channel.send(message)
         except OSError:
             pass  # the connection reader notices the disconnect and unregisters the player
+
+
+class BotPlayer(Player):
+    """The computer opponent: it has no connection, its moves come from the session."""
+
+    def __init__(self) -> None:
+        super().__init__("Ordinateur", None)
+
+    def send(self, message: dict) -> None:
+        pass
 
 
 class Lobby:
@@ -74,6 +84,26 @@ class Lobby:
                 self._start_session(definition, matched)
             self._broadcast_snapshot()
 
+    def join_bot(self, player: Player, game_id: object, difficulty: object = MEDIUM) -> None:
+        """Starts a match against the computer for a player who is waiting for an opponent."""
+        with self._lock:
+            definition = self._definitions.get(game_id)
+            if definition is None:
+                raise LobbyError("Jeu inconnu.")
+            if definition.create_bot is None:
+                raise LobbyError("Pas d'ordinateur pour ce jeu.")
+            if difficulty not in DIFFICULTIES:
+                raise LobbyError("Difficulté inconnue.")
+            if player.session is not None:
+                raise LobbyError("Tu es déjà en partie.")
+            if player not in self._waiting[definition.id]:
+                raise LobbyError("Tu dois d'abord attendre un adversaire.")
+            self._withdraw(player)
+            players = [player] + [BotPlayer() for _ in range(definition.player_count - 1)]
+            bots = {index: definition.create_bot(index, difficulty) for index in range(1, len(players))}
+            self._start_session(definition, players, bots)
+            self._broadcast_snapshot()
+
     def leave(self, player: Player) -> None:
         with self._lock:
             self._withdraw(player)
@@ -98,8 +128,10 @@ class Lobby:
                     self._close_session(session)
                     self._broadcast_snapshot()
 
-    def _start_session(self, definition: GameDefinition, players: List[Player]) -> None:
-        session = Session(definition, players)
+    def _start_session(
+        self, definition: GameDefinition, players: List[Player], bots: Optional[dict] = None
+    ) -> None:
+        session = Session(definition, players, bots)
         self._sessions.add(session)
         for player in players:
             player.session = session

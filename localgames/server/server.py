@@ -7,7 +7,7 @@ from typing import Callable, Dict, Optional
 
 from localgames.config import DISCOVERY_PORT, SERVER_PORT, TICK_INTERVAL_SECONDS
 from localgames.discovery import DiscoveryResponder
-from localgames.games.base import InvalidMove
+from localgames.games.base import MEDIUM, InvalidMove
 from localgames.games.registry import GAME_DEFINITIONS
 from localgames.protocol import ClientMessage, JsonLineChannel, ServerMessage, build_message
 from localgames.server.lobby import Lobby, LobbyError, Player
@@ -30,6 +30,9 @@ class GameServer:
         self._discovery: Optional[DiscoveryResponder] = None
         self._handlers: Dict[str, Callable[[Player, dict], None]] = {
             ClientMessage.JOIN: lambda player, message: lobby.join(player, message.get("game")),
+            ClientMessage.JOIN_BOT: lambda player, message: lobby.join_bot(
+                player, message.get("game"), message.get("difficulty", MEDIUM)
+            ),
             ClientMessage.LEAVE: lambda player, message: lobby.leave(player),
             ClientMessage.MOVE: lambda player, message: lobby.play(player, message.get("move")),
         }

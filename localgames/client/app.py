@@ -11,12 +11,13 @@ from localgames.ansi import BOLD, CYAN, DIM, GREEN, RED, REVERSE, YELLOW, style
 from localgames.client.locator import ServerLocator
 from localgames.client.terminal import Terminal
 from localgames.config import CONNECT_TIMEOUT_SECONDS, MAX_NAME_LENGTH
-from localgames.games.base import GameView
+from localgames.games.base import EASY, HARD, MEDIUM, GameView
 from localgames.games.registry import get_definition
 from localgames.protocol import ClientMessage, JsonLineChannel, ServerMessage, build_message
 
 POLL_SECONDS = 0.05
 _DISCONNECTED = {"type": "disconnected"}
+_BOT_KEYS = {"1": EASY, "2": MEDIUM, "3": HARD}
 
 
 class App:
@@ -166,6 +167,8 @@ class App:
             self._send(ClientMessage.JOIN, game=games[self._cursor]["id"])
         elif key == " ":
             self._send(ClientMessage.LEAVE)
+        elif key in _BOT_KEYS and self._waiting_game_id() is not None:
+            self._send(ClientMessage.JOIN_BOT, game=self._waiting_game_id(), difficulty=_BOT_KEYS[key])
         return False
 
     def _handle_match_key(self, key: str) -> bool:
@@ -211,7 +214,7 @@ class App:
         lines += ["", f"En ligne : {', '.join(self._lobby['online']) or '-'}", ""]
         if self._notice:
             lines += [self._notice, ""]
-        lines.append(style("↑↓ choisir · Entrée jouer · Espace annuler l'attente · Échap quitter", DIM))
+        lines.append(style("↑↓ choisir · Entrée jouer · Espace annuler l'attente · 1/2/3 ordinateur facile/moyen/difficile · Échap quitter", DIM))
         return lines
 
     def _waiting_game_id(self) -> Optional[str]:

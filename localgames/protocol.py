@@ -15,6 +15,7 @@ class ClientMessage:
     JOIN = "join"
     LEAVE = "leave"
     MOVE = "move"
+    JOIN_BOT = "join_bot"  # play against the computer instead of waiting for a human
 
 
 class ServerMessage:
