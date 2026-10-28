@@ -57,6 +57,7 @@ Un serveur lancé avec `--server` dans un terminal s'arrête avec Ctrl+C.
 | --- | --- |
 | Morpion | flèches + Entrée, ou touches 1-9 |
 | Pong | ↑/↓ (ou W/S) pour déplacer la raquette ; premier à 7 points. Terminal d'au moins 52×22. |
+| Combat aérien | ↑/↓ (ou W/S) pour piloter, Espace pour tirer un missile (rechargement 0,5 s) ; touche l'avion adverse, premier à 5 touches. Deux missiles qui se croisent s'annulent. Terminal d'au moins 62×24. |
 
 ## Tests
 
@@ -74,7 +75,8 @@ localgames/
 │   ├── base.py        # contrats : Game, GameView, GameDefinition
 │   ├── registry.py    # catalogue des jeux disponibles
 │   ├── tictactoe/     # logic.py (règles, serveur) + view.py (affichage, client)
-│   └── pong/          # jeu temps réel : le serveur appelle Game.tick() 30 fois par seconde
+│   ├── pong/          # jeu temps réel : le serveur appelle Game.tick() 30 fois par seconde
+│   └── dogfight/      # combat aérien temps réel (avions, missiles)
 ├── server/            # lobby (pseudos, files d'attente), sessions, serveur TCP
 └── client/            # terminal, connexion, écrans (login, menu, partie), boucle
 ```
