@@ -33,6 +33,13 @@ Options utiles :
 | `--name PSEUDO` | pré-remplir le pseudo |
 | `--port N` | port TCP du serveur |
 
+## Jeux
+
+| Jeu | Contrôles |
+| --- | --- |
+| Morpion | flèches + Entrée, ou touches 1-9 |
+| Pong | ↑/↓ (ou W/S) pour déplacer la raquette ; premier à 7 points. Terminal d'au moins 52×22. |
+
 ## Tests
 
 ```bash
@@ -48,10 +55,13 @@ localgames/
 ├── games/             # tout ce qui est propre aux jeux
 │   ├── base.py        # contrats : Game, GameView, GameDefinition
 │   ├── registry.py    # catalogue des jeux disponibles
-│   └── tictactoe/     # logic.py (règles, serveur) + view.py (affichage, client)
+│   ├── tictactoe/     # logic.py (règles, serveur) + view.py (affichage, client)
+│   └── pong/          # jeu temps réel : le serveur appelle Game.tick() 30 fois par seconde
 ├── server/            # lobby (pseudos, files d'attente), sessions, serveur TCP
 └── client/            # terminal, connexion, écrans (login, menu, partie), boucle
 ```
+
+Un jeu temps réel (comme Pong) met `real_time = True` et implémente `tick()` : le serveur l'appelle à intervalle fixe et diffuse l'état à chaque pas.
 
 Les règles (`Game`) ne connaissent ni le réseau ni l'affichage ; le serveur est l'unique source de vérité et valide chaque coup.
 

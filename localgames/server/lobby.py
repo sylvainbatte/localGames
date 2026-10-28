@@ -89,6 +89,15 @@ class Lobby:
                 self._close_session(session)
                 self._broadcast_snapshot()
 
+    def tick(self) -> None:
+        """Advances every running real-time match by one step."""
+        with self._lock:
+            for session in [s for s in self._sessions if s.is_real_time]:
+                session.tick()
+                if session.is_over:
+                    self._close_session(session)
+                    self._broadcast_snapshot()
+
     def _start_session(self, definition: GameDefinition, players: List[Player]) -> None:
         session = Session(definition, players)
         self._sessions.add(session)

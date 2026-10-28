@@ -14,6 +14,11 @@ class InvalidMove(Exception):
 class Game(ABC):
     """Server-side rules and state of one match. Knows nothing about networking."""
 
+    real_time = False  # True: the server calls tick() at a fixed rate instead of only reacting to moves
+
+    def tick(self) -> None:
+        """Advances a real-time game by one fixed step. Ignored by turn-based games."""
+
     @abstractmethod
     def play(self, player_index: int, move: object) -> None:
         """Applies a move or raises InvalidMove."""

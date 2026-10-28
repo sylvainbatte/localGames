@@ -5,7 +5,7 @@ import socket
 import threading
 from typing import Callable, Dict, Optional
 
-from localgames.config import DISCOVERY_PORT, SERVER_PORT
+from localgames.config import DISCOVERY_PORT, SERVER_PORT, TICK_INTERVAL_SECONDS
 from localgames.discovery import DiscoveryResponder
 from localgames.games.base import InvalidMove
 from localgames.games.registry import GAME_DEFINITIONS
@@ -26,6 +26,7 @@ class GameServer:
         self._requested_port = port
         self._discovery_port = discovery_port
         self._listener: Optional[socket.socket] = None
+        self._stopped = threading.Event()
         self._discovery: Optional[DiscoveryResponder] = None
         self._handlers: Dict[str, Callable[[Player, dict], None]] = {
             ClientMessage.JOIN: lambda player, message: lobby.join(player, message.get("game")),
@@ -54,8 +55,10 @@ class GameServer:
         if self._discovery:
             self._discovery.start(self.port)
         threading.Thread(target=self._accept_loop, daemon=True).start()
+        threading.Thread(target=self._tick_loop, daemon=True).start()
 
     def close(self) -> None:
+        self._stopped.set()
         if self._listener:
             self._listener.close()
         if self._discovery:
@@ -80,6 +83,10 @@ class GameServer:
             except OSError:
                 return
             threading.Thread(target=self._serve_client, args=(client,), daemon=True).start()
+
+    def _tick_loop(self) -> None:
+        while not self._stopped.wait(TICK_INTERVAL_SECONDS):
+            self._lobby.tick()
 
     def _serve_client(self, client: socket.socket) -> None:
         channel = JsonLineChannel(client)

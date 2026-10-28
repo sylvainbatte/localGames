@@ -21,6 +21,10 @@ class Session:
     def is_over(self) -> bool:
         return self._game.is_over
 
+    @property
+    def is_real_time(self) -> bool:
+        return self._game.real_time
+
     def start(self) -> None:
         names = [player.name for player in self.players]
         for index, player in enumerate(self.players):
@@ -35,6 +39,14 @@ class Session:
     def play(self, player: "Player", move: object) -> None:
         """Applies the move, then tells everyone. Raises InvalidMove if rejected."""
         self._game.play(self.players.index(player), move)
+        if not self.is_real_time:  # real-time games publish their state on every tick
+            self._broadcast_state()
+
+    def tick(self) -> None:
+        self._game.tick()
+        self._broadcast_state()
+
+    def _broadcast_state(self) -> None:
         update = build_message(ServerMessage.GAME_UPDATE, state=self._game.state())
         for participant in self.players:
             participant.send(update)
